@@ -1,51 +1,39 @@
-'use client';
-
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 
 interface ImageGalleryProps {
-    images: string[];
+    images: string[]; // Array of image URLs
 }
 
-export default function ImageGallery({ images }: ImageGalleryProps) {
-    const [selectedImage, setSelectedImage] = useState(images[0] || null);
+const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
+    const [selected, setSelected] = useState(images[0] || '');
 
-    if (!selectedImage) {
-        return <div className="h-96 flex items-center justify-center text-gray-400">No Image Available</div>;
+    if (!images || images.length === 0) {
+        return <div className="flex items-center justify-center h-96 bg-gray-100 text-gray-400">No images</div>;
     }
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative h-96 w-full bg-white rounded-xl overflow-hidden border border-gray-100">
-                <Image
-                    src={selectedImage}
-                    alt="Product Main"
-                    fill
-                    className="object-contain p-2"
-                />
+            <div className="relative h-96 w-full bg-gray-100 rounded-xl overflow-hidden">
+                <Image src={selected} alt="Product image" fill className="object-contain" />
             </div>
 
             {/* Thumbnails */}
-            {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                    {images.map((img, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => setSelectedImage(img)}
-                            className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === img ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                        >
-                            <Image
-                                src={img}
-                                alt={`Thumbnail ${idx + 1}`}
-                                fill
-                                className="object-cover"
-                            />
-                        </button>
-                    ))}
-                </div>
-            )}
+            <div className="flex flex-wrap gap-2 justify-center">
+                {images.map((src, idx) => (
+                    <button
+                        key={idx}
+                        type="button"
+                        className={`relative h-20 w-20 rounded border ${src === selected ? 'border-blue-500' : 'border-gray-200'}`}
+                        onClick={() => setSelected(src)}
+                    >
+                        <Image src={src} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" />
+                    </button>
+                ))}
+            </div>
         </div>
     );
-}
+};
+
+export default ImageGallery;
