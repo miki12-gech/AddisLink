@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Shop {
+  id              String    @id @default(uuid())
+  name            String
+  telegramChatId  BigInt    @unique @map("telegram_chat_id")
+  phoneNumber     String    @map("phone_number")
+  locationLat     Float?    @map("location_lat")
+  locationLong    Float?    @map("location_long")
+  isVerified      Boolean   @default(false) @map("is_verified")
+  trustScore      Int       @default(0) @map("trust_score")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  products        Product[]
+
+  @@map("shops")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  shopId      String   @map("shop_id")
+  rawText     String   @map("raw_text")
+  parsedSpecs Json?    @map("parsed_specs")
+  price       Int      @default(0)
+  imageUrl    String?  @map("image_url")
+  images      String[] @default([]) // For gallery
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("products")
+}
