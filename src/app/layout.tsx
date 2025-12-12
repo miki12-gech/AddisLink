@@ -1,19 +1,11 @@
-
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Use Inter font (Standard for Next.js 14)
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AddisLink - The Ethiopian Electronics Market",
@@ -28,7 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 flex flex-col min-h-screen`}
+        // Applied inter.className instead of geist variables
+        className={`${inter.className} antialiased bg-gray-50 flex flex-col min-h-screen`}
       >
         <Navbar />
         <main className="flex-grow">
