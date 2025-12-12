@@ -1,9 +1,9 @@
 
-import HeroSection from "@/components/HeroSection";
-import ProductGrid from "@/components/ProductGrid";
-import SearchFilters from "@/components/SearchFilters";
-import Pagination from "@/components/Pagination";
-import { fetchProducts } from "@/lib/api";
+import HeroSection from "../components/HeroSection";
+import ProductGrid from "../components/ProductGrid";
+import SearchFilters from "../components/SearchFilters";
+import Pagination from "../components/Pagination";
+import { fetchProducts } from "../lib/api";
 
 type Props = {
   searchParams: Promise<{ q?: string; minPrice?: string; maxPrice?: string; page?: string }>;
