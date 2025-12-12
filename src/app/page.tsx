@@ -1,7 +1,7 @@
 
-import HeroSection from "@/components/HeroSection";
-import ProductGrid from "@/components/ProductGrid";
-import SearchFilters from "@/components/SearchFilters";
+import HeroSection from "@/components/HeroSectionTEMP";
+import ProductGrid from "@/components/ProductGridTEMP";
+import SearchFilters from "@/components/SearchFiltersTEMP";
 import Pagination from "@/components/Pagination";
 import { fetchProducts } from "@/lib/api";
 
