@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { MapPin, Phone, ShieldCheck, ArrowLeft, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import ImageGallery from '@/components/ImageGallery';
+import ImageGallery from '../../../components/ImageGallery';
 
 const prisma = new PrismaClient();
 
