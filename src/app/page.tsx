@@ -5,7 +5,7 @@ import Pagination from "../components/Pagination";
 
 // 1. Import the API function we created earlier
 // (Adjust the path '../api/Api' if your file is in a different folder, e.g., '@/api/Api')
-import { fetchProducts } from "../api/Api";
+import { fetchProducts } from "../lib/api";
 
 type Props = {
   searchParams: Promise<{ q?: string; minPrice?: string; maxPrice?: string; page?: string }>;
