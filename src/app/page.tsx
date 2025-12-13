@@ -1,3 +1,4 @@
+
 import HeroSection from "../components/HeroSection";
 import ProductGrid from "../components/ProductGrid";
 import SearchFilters from "../components/SearchFilters";
