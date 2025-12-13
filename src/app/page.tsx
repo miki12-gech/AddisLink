@@ -2,77 +2,29 @@ import HeroSection from "../components/HeroSection";
 import ProductGrid from "../components/ProductGrid";
 import SearchFilters from "../components/SearchFilters";
 import Pagination from "../components/Pagination";
-// 1. Import Prisma directly (No more fetch API calls)
-import prisma from "../lib/prisma";
-import { Prisma } from "@prisma/client";
+
+// 1. Import the API function we created earlier
+// (Adjust the path '../api/Api' if your file is in a different folder, e.g., '@/api/Api')
+import { fetchProducts } from "../api/Api";
 
 type Props = {
   searchParams: Promise<{ q?: string; minPrice?: string; maxPrice?: string; page?: string }>;
 };
 
-// 2. This function runs on the server and talks directly to the DB
-async function getProducts(params: { q?: string; minPrice?: string; maxPrice?: string; page?: string }) {
-  const page = parseInt(params.page || '1', 10);
-  const pageSize = 12;
-
-  // Build the Search Logic (WHERE clause)
-  const where: Prisma.ProductWhereInput = {};
-
-  if (params.q) {
-    where.OR = [
-      { title: { contains: params.q, mode: 'insensitive' } },
-      // Optional: Search in description if your model has it
-      // { description: { contains: params.q, mode: 'insensitive' } }
-    ];
-  }
-
-  if (params.minPrice) {
-    where.price = { ...where.price as object, gte: parseFloat(params.minPrice) };
-  }
-
-  if (params.maxPrice) {
-    where.price = { ...where.price as object, lte: parseFloat(params.maxPrice) };
-  }
-
-  // Execute DB Query
-  const [rawProducts, totalCount] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      take: pageSize,
-      skip: (page - 1) * pageSize,
-      orderBy: { createdAt: 'desc' },
-      include: { shop: true } // Include shop details so we can show shop name
-    }),
-    prisma.product.count({ where })
-  ]);
-
-  // Convert Dates to Strings (To prevent "Date object" warnings in Next.js)
-  const products = rawProducts.map(p => ({
-    ...p,
-    createdAt: p.createdAt.toISOString(),
-    updatedAt: p.updatedAt.toISOString(),
-    shop: p.shop ? {
-      ...p.shop,
-      createdAt: p.shop.createdAt.toISOString(),
-      updatedAt: p.shop.updatedAt.toISOString(),
-    } : null
-  }));
-
-  return {
-    products,
-    pagination: {
-      page,
-      totalPages: Math.ceil(totalCount / pageSize),
-      totalItems: totalCount
-    }
-  };
-}
-
 export default async function Home({ searchParams }: Props) {
+  // 1. Await params (Required for Next.js 15)
   const params = await searchParams;
+  const currentPage = parseInt(params.page || '1', 10);
 
-  // 3. Call the DB function directly
-  const { products, pagination } = await getProducts(params);
+  // 2. Fetch Data from Render Backend
+  // We use the API function instead of calling Prisma directly.
+  // This fixes the build error and ensures we use the correct backend logic.
+  const { data: products, pagination } = await fetchProducts(
+    params.q,
+    params.minPrice,
+    params.maxPrice,
+    currentPage
+  );
 
   const title = params.q ? `Search Results for "${params.q}"` : "Featured Products";
 
@@ -89,14 +41,23 @@ export default async function Home({ searchParams }: Props) {
 
           {/* Main Content */}
           <div className="flex-1 space-y-12">
-            {/* @ts-ignore - Suppress loose type matching for the grid */}
+            {/* 
+              We pass the data from the API to the grid. 
+              The API already formatted the data correctly.
+            */}
+            {/* @ts-ignore - Keeping this if your Grid types are slightly different */}
             <ProductGrid
               title={title}
               products={products}
             />
 
-            <Pagination page={pagination.page} totalPages={pagination.totalPages} />
+            {/* Pagination Controls */}
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+            />
 
+            {/* Empty State */}
             {!products.length && (
               <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
                 <p className="text-lg">No products found matching your criteria.</p>
