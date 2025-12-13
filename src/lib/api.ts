@@ -1,8 +1,8 @@
+import { Product } from '@/data/mockData';
 
-import { Product } from '@/data/mockData'; // Initially importing type, but we might likely redefine it or standardise
-
-// We need to bridge the Prisma type and Frontend type. 
-// Ideally we share types, but for now let's define the API response type.
+// ==========================================
+// TYPES
+// ==========================================
 
 export interface ApiProduct {
     id: string;
@@ -20,6 +20,20 @@ export interface ApiProduct {
         locationLong: number | null;
     }
 }
+
+export interface PaginatedResult {
+    data: Product[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
+}
+
+// ==========================================
+// MAPPERS
+// ==========================================
 
 // Convert API response to UI Product model
 export function mapApiProductToUi(apiProduct: ApiProduct): Product {
@@ -41,15 +55,9 @@ export function mapApiProductToUi(apiProduct: ApiProduct): Product {
     }
 }
 
-export interface PaginatedResult {
-    data: Product[];
-    pagination: {
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-    };
-}
+// ==========================================
+// FETCH LOGIC
+// ==========================================
 
 export async function fetchProducts(
     query?: string,
@@ -64,17 +72,25 @@ export async function fetchProducts(
     params.append('page', page.toString());
     params.append('limit', '12');
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // 1. Get the Backend URL from Vercel Env Variables (e.g., https://your-app.onrender.com)
+    // Fallback to localhost for local development
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+    // 2. Determine the request URL based on environment (Server vs Client)
+    // Server-Side: We MUST use the full absolute URL (e.g., https://render.com/api/...)
+    // Client-Side: We use relative path ('/api/...') so it triggers the next.config.js rewrite
     const url = typeof window === 'undefined'
-        ? `${baseUrl}/api/products?${params.toString()}`
+        ? `${apiBase}/api/products?${params.toString()}`
         : `/api/products?${params.toString()}`;
 
     try {
         const res = await fetch(url, { cache: 'no-store' });
+
         if (!res.ok) {
             console.error(`Failed to fetch products: ${res.status}`);
             return { data: [], pagination: { total: 0, page: 1, limit: 12, totalPages: 0 } };
         }
+
         const responseData = await res.json();
 
         // Handle both old array format (fallback) and new paginated format
@@ -85,6 +101,7 @@ export async function fetchProducts(
             };
         }
 
+        // Handle standard paginated response
         return {
             data: responseData.data.map(mapApiProductToUi),
             pagination: responseData.pagination
