@@ -33,10 +33,16 @@ bot.on('text', async (ctx) => {
     const state = registrationState.get(chatId);
     const text = ctx.message.text;
 
+    console.log(`[Bot] Received text from ${chatId}: ${text}`); // Debug log
+
     // Ignore commands (handled by other listeners)
-    if (text.startsWith('/')) return;
+    if (text.startsWith('/')) {
+        console.log('[Bot] Ignoring command');
+        return;
+    }
 
     if (state) {
+        console.log('[Bot] User is in registration state:', state.step);
         if (state.step === 1) {
             state.name = text;
             state.step = 2;
@@ -58,17 +64,21 @@ bot.on('text', async (ctx) => {
 
     // Handle generic text from registered/unregistered users
     try {
+        console.log('[Bot] Checking if shop exists for', chatId);
         const existingShop = await prisma.shop.findUnique({
             where: { telegramChatId: BigInt(chatId) }
         });
 
+        console.log('[Bot] Shop exists:', !!existingShop);
+
         if (existingShop) {
-            ctx.reply(`Welcome Back, ${existingShop.name}! To post a product, simply send me a photo.`);
+            await ctx.reply(`Welcome Back, ${existingShop.name}! To post a product, simply send me a photo.`);
         } else {
-            ctx.reply("Please use /start to register your shop account.");
+            await ctx.reply("Please use /start to register your shop account.");
         }
     } catch (error) {
-        console.error("Error checking shop existence:", error);
+        console.error("[Bot] Error checking shop existence:", error);
+        ctx.reply("❌ An error occurred while checking your account.");
     }
 });
 
