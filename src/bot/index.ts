@@ -128,7 +128,12 @@ bot.on('photo', async (ctx) => {
     const fileId = photo.file_id;
     const caption = message.caption;
 
+    console.log(`[Bot] Received photo from ${chatId}. FileId: ${fileId.substring(0, 10)}...`);
+    console.log(`[Bot] Caption: "${caption}"`);
+    console.log(`[Bot] MediaGroupId: ${mediaGroupId}`);
+
     if (!mediaGroupId) {
+        console.log('[Bot] Processing as Single Photo');
         // Single Photo Logic (Existing)
         await processSingleProduct(ctx, fileId, caption);
         return;
@@ -136,6 +141,7 @@ bot.on('photo', async (ctx) => {
 
     // Media Group Logic (Album)
     if (!mediaGroupBuffer.has(mediaGroupId)) {
+        console.log('[Bot] New Album detected');
         // First image in album
         mediaGroupBuffer.set(mediaGroupId, {
             fileIds: [fileId],
@@ -144,10 +150,14 @@ bot.on('photo', async (ctx) => {
             timer: setTimeout(() => processAlbum(mediaGroupId, ctx), 2000) // Wait 2s for all photos
         });
     } else {
+        console.log('[Bot] Adding to existing Album');
         // Subsequent images
         const group = mediaGroupBuffer.get(mediaGroupId)!;
         group.fileIds.push(fileId);
-        if (caption && !group.caption) group.caption = caption; // Capture caption if it appeared later
+        if (caption && !group.caption) {
+            console.log('[Bot] Found caption in album update');
+            group.caption = caption; // Capture caption if it appeared later
+        }
         mediaGroupBuffer.set(mediaGroupId, group);
     }
 });
