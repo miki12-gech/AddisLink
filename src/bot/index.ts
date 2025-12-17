@@ -21,7 +21,7 @@ bot.start(async (ctx) => {
     });
 
     if (existingShop) {
-        ctx.reply(`Welcome back, ${existingShop.name}! Send me a photo with a caption to post a product.`);
+        ctx.reply(`Welcome Back, ${existingShop.name}! Post products by sending a photo with details.`);
     } else {
         ctx.reply("Welcome to AddisLink! Let's get your shop registered.\n\nWhat is your Shop Name?");
         registrationState.set(chatId, { step: 1 });
@@ -32,6 +32,9 @@ bot.on('text', async (ctx) => {
     const chatId = ctx.from.id;
     const state = registrationState.get(chatId);
     const text = ctx.message.text;
+
+    // Ignore commands (handled by other listeners)
+    if (text.startsWith('/')) return;
 
     if (state) {
         if (state.step === 1) {
@@ -51,6 +54,21 @@ bot.on('text', async (ctx) => {
             registrationState.set(chatId, state);
         }
         return;
+    }
+
+    // Handle generic text from registered/unregistered users
+    try {
+        const existingShop = await prisma.shop.findUnique({
+            where: { telegramChatId: BigInt(chatId) }
+        });
+
+        if (existingShop) {
+            ctx.reply(`Welcome Back, ${existingShop.name}! To post a product, simply send me a photo.`);
+        } else {
+            ctx.reply("Please use /start to register your shop account.");
+        }
+    } catch (error) {
+        console.error("Error checking shop existence:", error);
     }
 });
 
