@@ -22,7 +22,7 @@ bot.start(async (ctx) => {
     });
 
     if (existingShop) {
-        ctx.reply(`Welcome Back, ${existingShop.name}! Post products by sending a photo with details.`);
+        ctx.reply(`Welcome Back, ${existingShop.name}! Say "Hi" to add any product to your shop.`);
     } else {
         ctx.reply("Welcome to AddisLink! Let's get your shop registered.\n\nWhat is your Shop Name?");
         registrationState.set(chatId, { step: 1 });
@@ -73,7 +73,12 @@ bot.on('text', async (ctx) => {
         console.log('[Bot] Shop exists:', !!existingShop);
 
         if (existingShop) {
-            await ctx.reply(`Welcome Back, ${existingShop.name}! To post a product, simply send me a photo.`);
+            // If user says "Hi", give them the specific instruction
+            if (text.toLowerCase().includes('hi') || text.toLowerCase().includes('hello')) {
+                await ctx.reply(`Hello ${existingShop.name}! To post a product, simply send me a photo with the specs.`);
+            } else {
+                await ctx.reply(`Welcome Back, ${existingShop.name}! Say "Hi" or send a photo to post a product.`);
+            }
         } else {
             await ctx.reply("Please use /start to register your shop account.");
         }
