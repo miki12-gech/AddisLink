@@ -197,10 +197,30 @@ async function createProduct(ctx: any, fileIds: string[], caption?: string) {
     }
 }
 
+
 console.log('Bot is running...');
 bot.launch().catch(err => {
     console.error('Failed to launch bot', err);
 });
 
+// Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+// Add HTTP Server for Render Health Check
+import http from 'http';
+
+const port = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+    if (req.url === '/health') {
+        res.writeHead(200);
+        res.end('OK');
+    } else {
+        res.writeHead(404);
+        res.end('Not Found');
+    }
+});
+
+server.listen(port, () => {
+    console.log(`Health check server listening on port ${port}`);
+});
