@@ -3,6 +3,7 @@ import { Telegraf, Markup } from 'telegraf';
 import { PrismaClient } from '@prisma/client';
 import { parseTelegramText } from './parser';
 import { v2 as cloudinary } from 'cloudinary';
+import { createWorker } from 'tesseract.js';
 
 const prisma = new PrismaClient();
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN!);
@@ -126,15 +127,39 @@ bot.on('photo', async (ctx) => {
     // Get highest resolution photo
     const photo = message.photo[message.photo.length - 1];
     const fileId = photo.file_id;
-    const caption = message.caption;
+    let caption = message.caption;
 
     console.log(`[Bot] Received photo from ${chatId}. FileId: ${fileId.substring(0, 10)}...`);
     console.log(`[Bot] Caption: "${caption}"`);
     console.log(`[Bot] MediaGroupId: ${mediaGroupId}`);
 
+    // OCR Fallback: If no caption is provided, try to read text from image
+    if (!caption) {
+        try {
+            console.log('[Bot] No caption found. Attempting OCR...');
+            await ctx.reply('🔍 Reading text from image... (This might take a moment)');
+
+            const fileLink = await bot.telegram.getFileLink(fileId);
+            const worker = await createWorker('eng');
+            const { data: { text } } = await worker.recognize(fileLink.href);
+            await worker.terminate();
+
+            if (text && text.trim().length > 10) {
+                caption = text;
+                console.log(`[Bot] OCR Result: "${text.substring(0, 50)}..."`);
+                await ctx.reply('✅ Text detected! Parsing specs...');
+            } else {
+                console.log('[Bot] OCR failed to detect significant text.');
+                await ctx.reply('⚠️ No detailed text found in image. Please reply with specs.');
+            }
+        } catch (ocrError) {
+            console.error('[Bot] OCR Error:', ocrError);
+            await ctx.reply('⚠️ OCR failed. Please type the specs manually.');
+        }
+    }
+
     if (!mediaGroupId) {
         console.log('[Bot] Processing as Single Photo');
-        // Single Photo Logic (Existing)
         await processSingleProduct(ctx, fileId, caption);
         return;
     }
@@ -142,21 +167,19 @@ bot.on('photo', async (ctx) => {
     // Media Group Logic (Album)
     if (!mediaGroupBuffer.has(mediaGroupId)) {
         console.log('[Bot] New Album detected');
-        // First image in album
         mediaGroupBuffer.set(mediaGroupId, {
             fileIds: [fileId],
-            caption: caption, // Caption usually comes with the first message or one of them
+            caption: caption,
             chatId: chatId,
-            timer: setTimeout(() => processAlbum(mediaGroupId, ctx), 2000) // Wait 2s for all photos
+            timer: setTimeout(() => processAlbum(mediaGroupId, ctx), 2000)
         });
     } else {
         console.log('[Bot] Adding to existing Album');
-        // Subsequent images
         const group = mediaGroupBuffer.get(mediaGroupId)!;
         group.fileIds.push(fileId);
         if (caption && !group.caption) {
             console.log('[Bot] Found caption in album update');
-            group.caption = caption; // Capture caption if it appeared later
+            group.caption = caption;
         }
         mediaGroupBuffer.set(mediaGroupId, group);
     }
@@ -228,7 +251,7 @@ async function createProduct(ctx: any, fileIds: string[], caption?: string) {
             }
         });
 
-        ctx.reply(`✅ Posted: ${parsed.specs.condition === 'New' ? '🆕' : ''} Item with ${imageUrls.length} photos.\nPrice: ${parsed.price} ETB\n\nView at: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}`);
+        ctx.reply(`✅ Posted: ${parsed.specs.condition === 'New' ? '🆕' : ''} Item with ${imageUrls.length} photos.\nPrice: ${parsed.price} ETB\n\nView at: ${process.env.NEXT_PUBLIC_BASE_URL || 'https://addis-link.vercel.app'}`);
     } catch (e: any) {
         console.error("Save Error:", e);
         ctx.reply(`❌ Failed to save product. Error: ${e.message || e}`);

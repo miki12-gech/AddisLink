@@ -8,16 +8,6 @@ const nextConfig = {
     ],
   },
   // Add this section 👇
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        // This directs the request to your Render Backend
-        // Make sure to set NEXT_PUBLIC_API_URL in Vercel settings!
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://addislink.onrender.com'}/api/:path*`,
-      },
-    ]
-  },
 };
 
 module.exports = nextConfig;
